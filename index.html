@@ -4,7 +4,10 @@
 		<script type="text/javascript" src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
         <script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
 		<script type="text/javascript" src="webgl-utils.js"></script>
-        <script type="text/javascript" src="main.js"></script>
+		<script type="text/javascript" src="Util.js"></script>
+        <script type="text/javascript" src="Grid.js"></script>
+		<script type="text/javascript" src="main.js"></script>
+		<link src="final.txt" id="final">
     </head>
 
 <style type="text/css">
@@ -15,8 +18,8 @@
 
 <body>
 <canvas id="display" width="500" height="500">Uh Oh.</canvas>
-<dir id="posLabel" style="width:100px;margin:0"></dir>
-<dir id="lookLabel" style="width:100px;margin:0"></dir>
+<dir id="posLabel" style="margin:0"></dir>
+<dir id="lookLabel" style="margin:0"></dir>
 <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
 

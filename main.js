@@ -65,7 +65,7 @@ function initColorBuffers() {
 	var cBuf = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, cBuf);
 	var cols = [
-			1.0, 1.0, 1.0, 1.0,
+			0.0, 1.0, 1.0, 1.0,
 			1.0, 1.0, 1.0, 1.0,
 			1.0, 1.0, 1.0, 1.0,];
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cols), gl.STATIC_DRAW);
@@ -157,7 +157,7 @@ function start() {
 function update() {
 	//update labels
 	var $posLabel = $("#posLabel");
-	$posLabel.text("pos: "+pos[0]+", "+pos[1]+", "+pos[2]);
+	$posLabel.text("pos: "+Math.round(10*pos[0])/10+", "+Math.round(10*pos[1])/10+", "+Math.round(10*pos[2])/10);
 	var $lookLabel = $("#lookLabel");
 	$lookLabel.text("look: 0, 0, 0");
 	//
