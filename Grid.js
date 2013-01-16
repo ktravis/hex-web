@@ -1,11 +1,7 @@
 
 function Grid (templateTypes) {
 	this.index = 0;
-	this.TILE_WIDTH = 5;
-	this.TILE_HALF_WIDTH = this.TILE_WIDTH/2;
-	this.MAX_ROW_SIZE = 30;
-	this.MAX_ROWS = 39;
-	this.MAX_TILES = 1024;
+	
 	this.active = false;
 	this.types = [];
 
@@ -33,6 +29,11 @@ tileType = {
 		4:"UL_CORNER", 5:"UR_CORNER", 6:"LL_CORNER", 7:"LR_CORNER", 
 		8:"LL_EDGE", 9:"LR_EDGE", 10:"BOTTOM_CORNER", 11:"SPLIT_LEFT", 12:"SPLIT_RIGHT" //split left/right refers to REMAINING half of tile, relative to initial tile numbering (right to left, top to bottom)
 	}
+Grid.prototype.TILE_WIDTH = 5;
+Grid.prototype.TILE_HALF_WIDTH = Grid.prototype.TILE_WIDTH/2;
+Grid.prototype.MAX_ROW_SIZE = 30;
+Grid.prototype.MAX_ROWS = 39;
+Grid.prototype.MAX_TILES = 1024;
 Grid.prototype.typeList = function() { return this.types; }
 Grid.prototype.isActive = function() { return this.active; }
 Grid.prototype.setActive = function(a) { this.active = a; }

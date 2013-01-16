@@ -6,6 +6,7 @@ var canvas;
 var $canvas;
 var gl,shaderProg;
 var vb;
+var ib;
 var pMatrix = mat4.create();
 var mvMatrix = mat4.create();
 var pos = vec3.create([0.0, 0.0, 1.5]);
@@ -50,29 +51,37 @@ function getShader(gl, id) {
 function initVertexBuffers() { 
     var vBuf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuf);
-    var vertices = [
-             0.0,  1.0,  0.0,
-            -1.0, -1.0,  0.0,
-             1.0, -1.0,  0.0
-    ];
+    var vertices = Detector.prototype.getArrays("ALL")[0];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     vBuf.itemSize = 3;
-    vBuf.numItems = 3;
+    vBuf.numItems = 80;
     return vBuf;
 };
 
-function initColorBuffers() {
-	var cBuf = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, cBuf);
-	var cols = [
-			0.0, 1.0, 1.0, 1.0,
-			1.0, 1.0, 1.0, 1.0,
-			1.0, 1.0, 1.0, 1.0,];
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cols), gl.STATIC_DRAW);
-	cBuf.itemSize = 3;
-	cBuf.numItems = 3;
-	return cBuf;
-};
+function initIndexBuffers() {
+	var iBuf = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuf);
+	
+	var indList = {
+		"CENTER" : Detector.prototype.getIndexArrays("CENTER"),
+		"TOP_CORNER" : Detector.prototype.getIndexArrays("TOP_CORNER"),
+		"UL_CORNER" : Detector.prototype.getIndexArrays("UL_CORNER"),
+		"UR_CORNER" : Detector.prototype.getIndexArrays("UR_CORNER"),
+		"UL_EDGE" : Detector.prototype.getIndexArrays("UL_EDGE"),
+		"UR_EDGE" : Detector.prototype.getIndexArrays("UR_EDGE"),
+		"LL_CORNER" : Detector.prototype.getIndexArrays("LL_CORNER"),
+		"LR_CORNER" : Detector.prototype.getIndexArrays("LR_CORNER"),
+		"LL_EDGE" : Detector.prototype.getIndexArrays("LL_EDGE"),
+		"LR_EDGE" : Detector.prototype.getIndexArrays("LR_EDGE"),
+		"BOTTOM_CORNER" : Detector.prototype.getIndexArrays("BOTTOM_CORNER"),
+		"SPLIT_LEFT" : Detector.prototype.getIndexArrays("SPLIT_LEFT"),
+		"SPLIT_RIGHT" : Detector.prototype.getIndexArrays("SPLIT_RIGHT"),
+	}
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indList["SPLIT_LEFT"]), gl.STATIC_DRAW);
+	iBuf.itemSize = 1;
+	iBuf.numItems = 5;
+	return iBuf;
+}
 
 function initShaders() {
     var fragShader = getShader(gl, "shader-fs");
@@ -141,6 +150,7 @@ function start() {
 	}
     gl = WebGLUtils.setupWebGL(canvas, {depth: false});
     vb = initVertexBuffers();
+	ib = initIndexBuffers();
     initShaders();
     gl.clearColor(0.0,0.0,0.0,1.0);
 	
@@ -175,9 +185,13 @@ function render() {
     gl.vertexAttribPointer(shaderProg.vertexPositionAttribute, vb.itemSize, gl.FLOAT, false, 0, 0);
 	gl.enableVertexAttribArray(shaderProg.vertexPositionAttribute);
 	
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
     setMatrixUniforms();
-    gl.drawArrays(gl.TRIANGLES, 0, vb.numItems);
+    // gl.drawArrays(gl.TRIANGLE_FAN, 0, vb.numItems);
 	
+	gl.drawElements(gl.TRIANGLE_FAN, ib.numItems, gl.UNSIGNED_SHORT, 0);
+	
+
 	requestAnimFrame(render, canvas);
 };
 
