@@ -39,5 +39,4 @@ Grid.prototype.isActive = function() { return this.active; }
 Grid.prototype.setActive = function(a) { this.active = a; }
 Grid.prototype.toggleActive = function() { this.active = !this.active; }
 Grid.prototype.index = function() { return this.index; }
-
-function getType(i) { return tileType[i]; }
+Grid.prototype.getType = function(i) { return this.types[i]; }

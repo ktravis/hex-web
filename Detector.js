@@ -1,8 +1,87 @@
 function Detector () {
+	var temp = [];
+	this.x = [];
+	this.y = [];
+	
+	template = [];
+	
+	temp = readFile("final.txt");
+	temp = temp.split("\n");
+	for (var i = 0; i < 1024; i++) {
+		var s = temp[i].split(" ");
+		template[i] = tileType[parseInt(s[0])]
+		this.x[i] = parseFloat(s[1]);
+		this.y[i] = parseFloat(s[2]);
+	}
+	
+	// this.vertices = getArrays("ALL");
+	this.indices = [];
+	for (var i = 0; i < 13; i++) {
+		this.indices[i] = this.getIndexArrays(tileType[i]);
+	}
+	this.indexBuffers = {};
+	for (var i = 0; i < 13; i++) {
+		this.indexBuffers[tileType[i]] = createIndexBuffer(this.indices[i]);
+	}
+	
+	this.layers = [];
+	this.layers.push(new Grid(template));
+
+	this.xOffset = 0;
+	this.yOffset = 0;
+	this.targetXOffset = 0;
+	this.targetYOffset = 0;
+	this.zoom = -100;
+	this.targetZoom = -200;
+}
 
 
 
+Detector.prototype.draw = function(gl) {
+	pushMatrix();
+	var currBuffer, lastType;
+	mat4.translate(mvMatrix, [this.xOffset, -this.yOffset, this.zoom]);
+	mat4.rotateZ(mvMatrix, Math.PI/2, mvMatrix);
+	
+	for (var i = 0; i < 1024; i++) {
+		pushMatrix();
+		mat4.translate(mvMatrix, [this.y[i]/850, -this.x[i]/850, 0]);
+	
+		if (this.layers[0].getType(i) != lastType) {
+			lastType = this.layers[0].getType(i);
+			currBuffer = this.indexBuffers[lastType];
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, currBuffer);
+		}
+		setMatrixUniforms();
+		gl.drawElements(gl.TRIANGLE_FAN, currBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+		popMatrix();
+	}
+	popMatrix();
+}	
 
+Detector.prototype.update = function(){
+	if (Math.abs(this.targetZoom - this.zoom) > 0.01) {
+		this.zoom += (this.targetZoom - this.zoom) * 0.1;
+	}
+	if (Math.abs(this.targetXOffset - this.xOffset) > 0.01 || Math.abs(this.targetYOffset - this.yOffset) > 0.01) {
+		this.xOffset += (this.targetXOffset - this.xOffset) * 0.13;
+		this.yOffset += (this.targetYOffset - this.yOffset) * 0.13;
+	}
+}
+Detector.prototype.changeZoom = function(dz) {
+	this.targetZoom += dz;
+}
+Detector.prototype.moveAxis = function(dx,dy) {
+	this.targetXOffset += dx;
+	this.targetYOffset += dy;
+}
+Detector.prototype.setAxisPosition = function(ox,oy) {
+	this.targetXOffset = ox;
+	this.targetYOffset = oy;
+}
+Detector.prototype.resetAxis = function() {
+	this.setAxisPosition(0,0);
+	this.targetZoom = -200;
 }
 
 Detector.prototype.getIndexArrays = function (type) {
@@ -14,7 +93,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "CENTER":
 	{
-		for (var i = 0; i < 24; i++) {
+		for (var i = 0; i < 8; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -22,7 +101,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "TOP_CORNER":
 	{
-		for (var i = 24; i < 24 + 21; i++) {
+		for (var i = 8; i < 8 + 7; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -30,7 +109,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "UL_CORNER":
 	{
-		for (var i = 45; i < 45 + 21; i++) {
+		for (var i = 15; i < 15 + 7; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -38,7 +117,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "UR_CORNER":
 	{
-		for (var i = 66; i < 66 + 21; i++) {
+		for (var i = 22; i < 22 + 7; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -46,7 +125,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "UL_EDGE":
 	{
-		for (var i = 87; i < 87 + 15; i++) {
+		for (var i = 29; i < 29 + 5; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -54,7 +133,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "UR_EDGE":
 	{
-		for (var i = 102; i < 102 + 15; i++) {
+		for (var i = 34; i < 34 + 5; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -62,7 +141,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "LL_CORNER":
 	{
-		for (var i = 117; i < 117 + 21; i++) {
+		for (var i = 39; i < 39 + 7; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -70,7 +149,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "LR_CORNER":
 	{
-		for (var i = 138; i < 138 + 21; i++) {
+		for (var i = 46; i < 46 + 7; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -78,7 +157,7 @@ Detector.prototype.getIndexArrays = function (type) {
 
 	case "LL_EDGE":
 	{
-		for (var i = 159; i < 159 + 15; i++) {
+		for (var i = 53; i < 53 + 5; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -86,7 +165,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "LR_EDGE":
 	{
-		for (var i = 174; i < 174 + 15; i++) {
+		for (var i = 58; i < 58 + 5; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -94,7 +173,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "BOTTOM_CORNER":
 	{
-		for (var i = 189; i < 189 + 21; i++) {
+		for (var i = 63; i < 63 + 7; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -102,7 +181,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "SPLIT_LEFT":
 	{
-		for (var i = 210; i < 210 + 15; i++) {
+		for (var i = 70; i < 70 + 5; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -110,7 +189,7 @@ Detector.prototype.getIndexArrays = function (type) {
 	
 	case "SPLIT_RIGHT":
 	{
-		for (var i = 225; i < 225 + 15; i++) {
+		for (var i = 75; i < 75 + 5; i++) {
 			inds.push(i);
 		}
 		return inds;
@@ -233,6 +312,7 @@ Detector.prototype.getArrays = function (type) {
 			sideNormalRadius, sideLength/2, 0,
 		];
 		norms = [
+			0, 0, 1.0,
 			0, 0, 1.0,
 			0, 0, 1.0,
 			0, 0, 1.0,
@@ -420,14 +500,6 @@ Detector.prototype.getArrays = function (type) {
 			0, 0, 0,
 			sideNormalRadius, sideLength/2, 0,
 			-sideNormalRadius, sideLength/2, 0,
-			-sideNormalRadius, -sideLength/2, 0,
-			0, -sideLength, 0,
-			sideNormalRadius, -sideLength/2, 0,
-			sideNormalRadius, sideLength/2, 0,
-			
-			0, 0, 0,
-			sideNormalRadius, sideLength/2, 0,
-			0, sideLength, 0,
 			-sideNormalRadius, -sideLength/2, 0,
 			0, -sideLength, 0,
 			sideNormalRadius, -sideLength/2, 0,

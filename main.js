@@ -1,16 +1,14 @@
-var sideLength = 2.5;
-var sideNormalRadius = Math.sqrt(3)*sideLength/2.0;
-
 window.onload=start;
 var canvas;
 var $canvas;
-var gl,shaderProg;
+var gl,shaderProg, vertexPositionAttribute;
 var vb;
 var ib;
 var pMatrix = mat4.create();
 var mvMatrix = mat4.create();
-var pos = vec3.create([0.0, 0.0, 1.5]);
-
+var mvStack = [mvMatrix];
+var detector;
+var pos = vec3.create([0.0, 0.0, 200]);
 
 function getShader(gl, id) {
     var shaderScript = document.getElementById(id);
@@ -77,9 +75,11 @@ function initIndexBuffers() {
 		"SPLIT_LEFT" : Detector.prototype.getIndexArrays("SPLIT_LEFT"),
 		"SPLIT_RIGHT" : Detector.prototype.getIndexArrays("SPLIT_RIGHT"),
 	}
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indList["SPLIT_LEFT"]), gl.STATIC_DRAW);
+
+	var indices = indList["CENTER"];
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 	iBuf.itemSize = 1;
-	iBuf.numItems = 5;
+	iBuf.numItems = indices.length;
 	return iBuf;
 }
 
@@ -95,6 +95,9 @@ function initShaders() {
     }
 
     gl.useProgram(shaderProg);
+	
+	vertexPositionAttribute = gl.getAttribLocation(shaderProg, "aVertexPosition");
+	gl.enableVertexAttribArray(vertexPositionAttribute);
     shaderProg.pMatrixUniform = gl.getUniformLocation(shaderProg, "uPMatrix");
     shaderProg.mvMatrixUniform = gl.getUniformLocation(shaderProg, "uMVMatrix");
 };
@@ -107,51 +110,47 @@ function handleMouseWheel(event) {
 	var delta = 0;
 	if (!event) event = window.event;
 	if (event.wheelDelta) {
-		delta = event.wheelDelta/120;
+		delta = event.wheelDelta/600;
 	} else if (event.detail) {
 		delta = -event.detail/3;
 	}
-	if (delta) zoom(delta);
+	if (delta) detector.changeZoom(delta);
 	if (event.preventDefault) event.preventDefault();
 	event.returnValue=false;
-}
-function zoom(dz) {
-	if (pos[2]+dz < 0.1) {
-		pos[2] = 0.1;
-		return;
-	}
-	pos.set([pos[0],pos[1],pos[2]+dz]);
 }
 	
 function start() {
 	canvas = document.getElementById("display");
 	$canvas = $("#display");
 	$canvas.bind('mousewheel DOMMouseScroll', function(e) {
-    var scrollTo = null;
+		var scrollTo = null;
 
-    if (e.type == 'mousewheel') {
-        scrollTo = (e.originalEvent.wheelDelta * -1);
-    }
-    else if (e.type == 'DOMMouseScroll') {
-        scrollTo = 40 * e.originalEvent.detail;
-    }
+		if (e.type == 'mousewheel') {
+			scrollTo = (e.originalEvent.wheelDelta * -1);
+		}
+		else if (e.type == 'DOMMouseScroll') {
+			scrollTo = 40 * e.originalEvent.detail;
+		}
 
-    if (scrollTo) {
-        e.preventDefault();
-        $(this).scrollTop(scrollTo + $(this).scrollTop());
-    }
-});
+		if (scrollTo) {
+			e.preventDefault();
+			$(this).scrollTop(scrollTo + $(this).scrollTop());
+		}
+	});
 	$(canvas).bind('mousewheel', function(event) {
-    zoom(event.originalEvent.wheelDelta/1000);
+		detector.changeZoom(event.originalEvent.wheelDelta/100);
+	
 	});
     
 	if (canvas.addEventListener) {
 		canvas.addEventListener("DOMMouseScroll",handleMouseWheel, false);
 	}
     gl = WebGLUtils.setupWebGL(canvas, {depth: false});
-    vb = initVertexBuffers();
-	ib = initIndexBuffers();
+    
     initShaders();
+	vb = initVertexBuffers();
+	ib = initIndexBuffers();
+
     gl.clearColor(0.0,0.0,0.0,1.0);
 	
 	
@@ -160,41 +159,34 @@ function start() {
 	
 	var ratio = canvas.width / canvas.height;
 	
-	mat4.frustum(-ratio, ratio, -1.0, 1.0, 0.1, 100.0, pMatrix);
+	mat4.perspective(45, ratio, .1, 1000, pMatrix);
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+	gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+	
+	detector = new Detector();
+	
 	render();
 };
 
 function update() {
 	//update labels
-	var $posLabel = $("#posLabel");
-	$posLabel.text("pos: "+Math.round(10*pos[0])/10+", "+Math.round(10*pos[1])/10+", "+Math.round(10*pos[2])/10);
-	var $lookLabel = $("#lookLabel");
-	$lookLabel.text("look: 0, 0, 0");
+	var $posLabel = $("#zoomLabel");
+	$posLabel.text("zoom: "+Math.round(detector.zoom));
+	var $lookLabel = $("#axisLabel");
+	$lookLabel.text("axis: "+Math.round(detector.xOffset)+", "+Math.round(detector.yOffset));
 	//
-	
-	if (pos[2] < 0.1) pos[2] = 0.1;
+	detector.update();
 }
 function render() {
     update();
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    mat4.identity(mvMatrix);
-
-    mat4.lookAt(pos,[0,0,0],[0,1,0],mvMatrix);//
+	mat4.identity(mvMatrix);
+    
+	detector.draw(gl);
 	
-    gl.bindBuffer(gl.ARRAY_BUFFER, vb);
-    gl.vertexAttribPointer(shaderProg.vertexPositionAttribute, vb.itemSize, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(shaderProg.vertexPositionAttribute);
-	
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
-    setMatrixUniforms();
-    // gl.drawArrays(gl.TRIANGLE_FAN, 0, vb.numItems);
-	
-	gl.drawElements(gl.TRIANGLE_FAN, ib.numItems, gl.UNSIGNED_SHORT, 0);
-	
-
 	requestAnimFrame(render, canvas);
 };
-
 
 
 

@@ -19,8 +19,13 @@
 
 <body>
 <canvas id="display" width="500" height="500">Uh Oh.</canvas>
-<dir id="posLabel" style="margin:0"></dir>
-<dir id="lookLabel" style="margin:0"></dir>
+<dir id="zoomLabel" style="margin:0"></dir>
+<dir id="axisLabel" style="margin:0"></dir>
+<button onclick="javascript:detector.moveAxis(10,0);">left</button>
+<button onclick="javascript:detector.moveAxis(0,10);">up</button>
+<button onclick="javascript:detector.moveAxis(0,-10);">down</button>
+<button onclick="javascript:detector.moveAxis(-10,0);">right</button>
+<button onclick="javascript:detector.resetAxis();">reset</button>
 <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
 
