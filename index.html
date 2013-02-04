@@ -17,13 +17,15 @@
 	</script>
 </head>
 <body>
-	<div id="bigbox" style="display:block">
+	<div id="bigbox" style="display:block;float:left;clear:right">
 		<canvas id="display" width="500" height="500" style="float:left">Uh Oh.</canvas>
-		<textarea id="vshader-field" width="500" height="240" style="float:left;"></textarea>
-		<textarea id="fshader-field" width="500" height="240" style="float:left;"></textarea>
+		<div id="shaders">
+			<textarea id="vshader-field" cols="80" rows="14" style="margin-left:10px;"></textarea>
+			<textarea id="fshader-field" cols="80" rows="14" style="margin:10px;"></textarea>
+		</div>
 	</div>
 	<br/>
-	<div id="smallbox" style="display:block">
+	<div id="smallbox" style="display:block;float:left;">
 		<dir id="zoomLabel" style="margin:0"></dir>
 		<dir id="axisLabel" style="margin:0"></dir>
 		<button onclick="javascript:detector.moveAxis(10,0);">left</button>
@@ -33,20 +35,21 @@
 		<button onclick="javascript:detector.resetAxis();">reset</button>
 		<input type="file" id="infile" />
 	</div>
-	<script id="shader-fs" type="x-shader/x-fragment">
-		precision mediump float;
-
-		void main(void) {
-			gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-		}
+	<button onclick="step();">step</button>
+	<div id="dataview" style="margin-top:20px;padding:10px;width:500px;height:400px;background-color:#DDD;display:block"></div>
+	<script id="shader-fs" type="x-shader/x-fragment">precision mediump float;
+uniform int uIndex;
+uniform float uHighlight;
+void main(void) {
+	gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+}
 	</script>
-	<script id="shader-vs" type="x-shader/x-vertex">
-		attribute vec3 aVertexPosition;
-		uniform mat4 uMVMatrix;
-		uniform mat4 uPMatrix;
-		void main(void) {
-			gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-		}
+	<script id="shader-vs" type="x-shader/x-vertex">attribute vec3 aVertexPosition;
+uniform mat4 uMVMatrix;
+uniform mat4 uPMatrix;
+void main(void) {
+	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+}
 	</script>
 
 </body>

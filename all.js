@@ -321,12 +321,17 @@ function bitMask(marker, high, low) {
 }
 function inittt() {
 	var fr = new FileReader();
+	fr.onload = function(){ KpixFileReader.init(this.result); };
 	var f = document.getElementById("infile").files[0];
 	fr.readAsArrayBuffer(f);
 	return fr;
-	KpixFileReader.init(fr.result);
+}
+function step() {
+	if (!KpixFileReader.mapFile) {
+		inittt();
 	}
-
+	$("#dataview").text(KpixFileReader.readRecord());
+}
 var KpixFileReader = {
 	mapFile : null,
 	init : function(ba) { 
@@ -367,11 +372,11 @@ var KpixFileReader = {
 		}
 		var trailer = this.mapFile.readInt();
 		if (trailer != 0) throw("Unexpected data in event trailer.");
-		return { recordType : type, recordLength : length, eventNumber : eventNum, timestamp : time, data : data };
+		return { recordType : type, recordLength : length, eventNumber : eventNum, timestamp : time, data : data, toString : function() { return "Record type: "+this.type+"\nRecord length: "+this.length+"\nEvent number: "+this.eventNumber+"\nTime stamp: "+this.timestamp+"\nData: "+this.data; }, };
 	},
 	readXMLRecord : function(type, length) {
 		var bytes = this.mapFile.read(length);
-		return { recordType : type, recordLength : length, xml : String.fromCharCode.apply(String, bytes) };
+		return { recordType : type, recordLength : length, xml : String.fromCharCode.apply(String, bytes), toString : function() { return "Record type: "+this.type+"\nRecord length: "+this.length+"\nXML: "+this.xml; } };
 	}
 }
 //KpixFileReader.js END
@@ -468,14 +473,20 @@ function Detector () {
 
 
 Detector.prototype.draw = function(gl) {
+	// gl.uniform3fv(gl.getUniformLocation(shaderProg, "uHighColor"), [1.0,0.0,0.0]);
+	var highlightUniform = gl.getUniformLocation(shaderProg, "uHighlight");
 	pushMatrix();
 	var currBuffer, lastType;
 	mat4.translate(mvMatrix, [this.xOffset, -this.yOffset, this.zoom]);
 	mat4.rotateZ(mvMatrix, Math.PI/2, mvMatrix);
 	mat4.rotateY(mvMatrix, this.yaw*Math.PI/180, mvMatrix);
 	mat4.rotateX(mvMatrix, this.pitch*Math.PI/180, mvMatrix);
+	uIndex = gl.getUniformLocation(shaderProg, "uIndex");
 	
 	for (var i = 0; i < 1024; i++) {
+		gl.uniform1i(uIndex, i);
+		gl.uniform1f(highlightUniform, i == 10 ? 1.0 : 0.0);
+		
 		pushMatrix();
 		mat4.translate(mvMatrix, [this.y[i]/850, -this.x[i]/850, 0]);
 	
@@ -1060,7 +1071,7 @@ Detector.prototype.getArrays = function (type) {
 window.onload=start;
 var canvas;
 var $canvas;
-var gl,shaderProg, vertexPositionAttribute;
+var gl,shaderProg, vertexPositionAttribute, uIndex;
 var vb;
 var ib;
 var pMatrix = mat4.create();
@@ -1069,10 +1080,7 @@ var mvStack = [mvMatrix];
 var detector;
 var pos = vec3.create([0.0, 0.0, 200]);
 
-	$("#vshader-field").text($("#shader-vs").text());
-	$("#vshader-field").bind("input propertychange", function(){ $("#shader-vs").text(this.value); initShaders(); }
-	$("#fshader-field").text($("#shader-fs").text());
-	$("#fshader-field").bind("input propertychange", function(){ $("#shader-fs").text(this.value); initShaders(); }
+
 
 
 function getShader(gl, id) {
@@ -1160,7 +1168,7 @@ function initShaders() {
     }
 
     gl.useProgram(shaderProg);
-	
+	uIndex = gl.getUniformLocation(shaderProg, "uIndex");
 	vertexPositionAttribute = gl.getAttribLocation(shaderProg, "aVertexPosition");
 	gl.enableVertexAttribArray(vertexPositionAttribute);
     shaderProg.pMatrixUniform = gl.getUniformLocation(shaderProg, "uPMatrix");
@@ -1172,6 +1180,12 @@ function setMatrixUniforms() {
 };
     
 function start() {
+	$("#vshader-field").text($("#shader-vs").text());
+	$("#vshader-field").on("keydown", function(e){ if (e.ctrlKey && e.keyCode == 13) {$("#shader-vs").text(this.value); initShaders();}});
+	$("#fshader-field").text($("#shader-fs").text());
+	$("#fshader-field").on("keydown", function(e){ if (e.ctrlKey && e.keyCode == 13) {$("#shader-fs").text(this.value); initShaders();} });
+
+	
 	canvas = document.getElementById("display");
 	$canvas = $("#display");
 	$canvas.bind('mousewheel DOMMouseScroll', function(e) {

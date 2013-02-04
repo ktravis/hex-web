@@ -42,14 +42,20 @@ function Detector () {
 
 
 Detector.prototype.draw = function(gl) {
+	// gl.uniform3fv(gl.getUniformLocation(shaderProg, "uHighColor"), [1.0,0.0,0.0]);
+	var highlightUniform = gl.getUniformLocation(shaderProg, "uHighlight");
 	pushMatrix();
 	var currBuffer, lastType;
 	mat4.translate(mvMatrix, [this.xOffset, -this.yOffset, this.zoom]);
 	mat4.rotateZ(mvMatrix, Math.PI/2, mvMatrix);
 	mat4.rotateY(mvMatrix, this.yaw*Math.PI/180, mvMatrix);
 	mat4.rotateX(mvMatrix, this.pitch*Math.PI/180, mvMatrix);
+	uIndex = gl.getUniformLocation(shaderProg, "uIndex");
 	
 	for (var i = 0; i < 1024; i++) {
+		gl.uniform1i(uIndex, i);
+		gl.uniform1f(highlightUniform, i == 10 ? 1.0 : 0.0);
+		
 		pushMatrix();
 		mat4.translate(mvMatrix, [this.y[i]/850, -this.x[i]/850, 0]);
 	

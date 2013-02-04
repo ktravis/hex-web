@@ -4,12 +4,17 @@ function bitMask(marker, high, low) {
 }
 function inittt() {
 	var fr = new FileReader();
+	fr.onload = function(){ KpixFileReader.init(this.result); };
 	var f = document.getElementById("infile").files[0];
 	fr.readAsArrayBuffer(f);
 	return fr;
-	KpixFileReader.init(fr.result);
+}
+function step() {
+	if (!KpixFileReader.mapFile) {
+		inittt();
 	}
-
+	$("#dataview").text(KpixFileReader.readRecord());
+}
 var KpixFileReader = {
 	mapFile : null,
 	init : function(ba) { 
@@ -50,10 +55,10 @@ var KpixFileReader = {
 		}
 		var trailer = this.mapFile.readInt();
 		if (trailer != 0) throw("Unexpected data in event trailer.");
-		return { recordType : type, recordLength : length, eventNumber : eventNum, timestamp : time, data : data };
+		return { recordType : type, recordLength : length, eventNumber : eventNum, timestamp : time, data : data, toString : function() { return "Record type: "+this.type+"\nRecord length: "+this.length+"\nEvent number: "+this.eventNumber+"\nTime stamp: "+this.timestamp+"\nData: "+this.data; }, };
 	},
 	readXMLRecord : function(type, length) {
 		var bytes = this.mapFile.read(length);
-		return { recordType : type, recordLength : length, xml : String.fromCharCode.apply(String, bytes) };
+		return { recordType : type, recordLength : length, xml : String.fromCharCode.apply(String, bytes), toString : function() { return "Record type: "+this.type+"\nRecord length: "+this.length+"\nXML: "+this.xml; } };
 	}
 }

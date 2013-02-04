@@ -1,7 +1,7 @@
 window.onload=start;
 var canvas;
 var $canvas;
-var gl,shaderProg, vertexPositionAttribute;
+var gl,shaderProg, vertexPositionAttribute, uIndex;
 var vb;
 var ib;
 var pMatrix = mat4.create();
@@ -10,10 +10,7 @@ var mvStack = [mvMatrix];
 var detector;
 var pos = vec3.create([0.0, 0.0, 200]);
 
-	$("#vshader-field").text($("#shader-vs").text());
-	$("#vshader-field").bind("input propertychange", function(){ $("#shader-vs").text(this.value); initShaders(); }
-	$("#fshader-field").text($("#shader-fs").text());
-	$("#fshader-field").bind("input propertychange", function(){ $("#shader-fs").text(this.value); initShaders(); }
+
 
 
 function getShader(gl, id) {
@@ -101,7 +98,7 @@ function initShaders() {
     }
 
     gl.useProgram(shaderProg);
-	
+	uIndex = gl.getUniformLocation(shaderProg, "uIndex");
 	vertexPositionAttribute = gl.getAttribLocation(shaderProg, "aVertexPosition");
 	gl.enableVertexAttribArray(vertexPositionAttribute);
     shaderProg.pMatrixUniform = gl.getUniformLocation(shaderProg, "uPMatrix");
@@ -113,6 +110,12 @@ function setMatrixUniforms() {
 };
     
 function start() {
+	$("#vshader-field").text($("#shader-vs").text());
+	$("#vshader-field").on("keydown", function(e){ if (e.ctrlKey && e.keyCode == 13) {$("#shader-vs").text(this.value); initShaders();}});
+	$("#fshader-field").text($("#shader-fs").text());
+	$("#fshader-field").on("keydown", function(e){ if (e.ctrlKey && e.keyCode == 13) {$("#shader-fs").text(this.value); initShaders();} });
+
+	
 	canvas = document.getElementById("display");
 	$canvas = $("#display");
 	$canvas.bind('mousewheel DOMMouseScroll', function(e) {
