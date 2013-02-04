@@ -10,6 +10,12 @@ var mvStack = [mvMatrix];
 var detector;
 var pos = vec3.create([0.0, 0.0, 200]);
 
+	$("#vshader-field").text($("#shader-vs").text());
+	$("#vshader-field").bind("input propertychange", function(){ $("#shader-vs").text(this.value); initShaders(); }
+	$("#fshader-field").text($("#shader-fs").text());
+	$("#fshader-field").bind("input propertychange", function(){ $("#shader-fs").text(this.value); initShaders(); }
+
+
 function getShader(gl, id) {
     var shaderScript = document.getElementById(id);
     if (!shaderScript) {
@@ -106,19 +112,6 @@ function setMatrixUniforms() {
     gl.uniformMatrix4fv(shaderProg.mvMatrixUniform, false, mvMatrix);
 };
     
-function handleMouseWheel(event) {
-	var delta = 0;
-	if (!event) event = window.event;
-	if (event.wheelDelta) {
-		delta = event.wheelDelta/600;
-	} else if (event.detail) {
-		delta = -event.detail/3;
-	}
-	if (delta) detector.changeZoom(delta);
-	if (event.preventDefault) event.preventDefault();
-	event.returnValue=false;
-}
-	
 function start() {
 	canvas = document.getElementById("display");
 	$canvas = $("#display");
@@ -139,11 +132,15 @@ function start() {
 	});
 	$(canvas).bind('mousewheel', function(event) {
 		detector.changeZoom(event.originalEvent.wheelDelta/100);
-	
 	});
-    
+
+	canvas.oncontextmenu = function() { return false; }
 	if (canvas.addEventListener) {
 		canvas.addEventListener("DOMMouseScroll",handleMouseWheel, false);
+		canvas.addEventListener("mousedown", handleMouseDown, true);
+		canvas.addEventListener("mouseup", handleMouseUp, false);
+		canvas.addEventListener("mouseout", handleMouseUp, false);
+		canvas.addEventListener("mousemove", handleMouseDrag, false);
 	}
     gl = WebGLUtils.setupWebGL(canvas, {depth: false});
     
@@ -176,6 +173,14 @@ function update() {
 	var $lookLabel = $("#axisLabel");
 	$lookLabel.text("axis: "+Math.round(detector.xOffset)+", "+Math.round(detector.yOffset));
 	//
+	
+	if (Inputs.dragging) {
+		if (Inputs.button == "right") detector.moveAxis(Inputs.dx, Inputs.dy);
+		else if (Inputs.button == "left") detector.updateOrientation(-Inputs.dy, Inputs.dx);
+		Inputs.dx = 0;
+		Inputs.dy = 0;
+		Inputs.dragging = false;
+	}
 	detector.update();
 }
 function render() {
