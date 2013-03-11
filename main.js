@@ -115,6 +115,8 @@ function start() {
 	$("#fshader-field").text($("#shader-fs").text());
 	$("#fshader-field").on("keydown", function(e){ if (e.ctrlKey && e.keyCode == 13) {$("#shader-fs").text(this.value); initShaders();} });
 
+	var $overlay = $("#overlay");
+	$overlay.hide();
 	
 	canvas = document.getElementById("display");
 	$canvas = $("#display");
@@ -134,7 +136,7 @@ function start() {
 		}
 	});
 	$(canvas).bind('mousewheel', function(event) {
-		detector.changeZoom(event.originalEvent.wheelDelta/100);
+		detector.changeZoom(event.originalEvent.wheelDelta/10);
 	});
 
 	canvas.oncontextmenu = function() { return false; }
@@ -170,12 +172,6 @@ function start() {
 };
 
 function update() {
-	//update labels
-	var $posLabel = $("#zoomLabel");
-	$posLabel.text("zoom: "+Math.round(detector.zoom));
-	var $lookLabel = $("#axisLabel");
-	$lookLabel.text("axis: "+Math.round(detector.xOffset)+", "+Math.round(detector.yOffset));
-	//
 	
 	if (Inputs.dragging) {
 		if (Inputs.button == "right") detector.moveAxis(Inputs.dx, Inputs.dy);

@@ -21,8 +21,6 @@ function Grid (templateTypes) {
 	// }
 }
 
-
-
 // enum "tileType" describes the placement of the tile on the grid
 tileType = {
 		0:"CENTER", 1:"TOP_CORNER", 2:"UL_EDGE", 3:"UR_EDGE", 

@@ -9,8 +9,7 @@ def checkForUpdates(to_check, path="./"):
 		if updated: 
 			print "Update: ", ", ".join(updated)
 			combine(to_check)
-			time.sleep(6)
-		#else: print "No update..."
+			time.sleep(4)
 		before = after
 		
 def combine(flist):
@@ -30,7 +29,7 @@ if len(sys.argv) > 1:
 else:
 	path_to_watch = "./"
 	
-check = ["jquery-1.9.0.min.js", "glMatrix-0.9.5.min.js", "webgl-utils.js", "Util.js", "InputHandler.js", "KpixFileReader.js", "Grid.js", "Detector.js", "main.js"]
 	
 if __name__ == "__main__":
+	check = [f for f in os.listdir(path_to_watch) if (f != "all.js" and re.search("\.js$", f))]
 	checkForUpdates(check,path_to_watch)

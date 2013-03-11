@@ -8,40 +8,94 @@
 	<script type="text/javascript" src="InputHandler.js"></script>
 	<script type="text/javascript" src="Grid.js"></script>
 	<script type="text/javascript" src="Detector.js"></script>
-	<script type="text/javascript" src="main.js"></script>-->
-	<script type="text/javascript" src="byte-buffer.min.js"></script>
+	<script type="text/javascript" src="main.js"></script>
+	<script type="text/javascript" src="byte-buffer.min.js"></script>-->
 	<script type="text/javascript" src="all.js"></script>
 	<link src="final.txt" id="final">
 	<script type="javascript/text">
 
 	</script>
+	<style>
+		body { 
+			background-color: #DDD;
+		}
+		pre {
+			margin: 0px;
+			padding: 0px;
+		}
+		#overlay {
+			margin:0px;
+			padding:0px;
+			width:100%;
+			height:100%;
+			position:fixed;
+			background-color:rgba(0,0,0,.3);
+			top:0;
+			left:0;
+			font-size: 24pt;
+		}
+		.overlay-text {
+			color: rgba(255,255,255,1);
+			width:20%;
+			height:auto;
+			margin-left:auto;
+			margin-right:auto;
+			margin-top:20%;
+			margin-bottom:auto;
+			text-align: center;
+			border-color: rgba(255,255,255,.4);
+			border-style: dashed;
+			border-radius: 2px;
+		}
+		#shaders { 
+			display:none;
+		}
+	</style>
 </head>
 <body>
-	<div id="bigbox" style="display:block;float:left;clear:right">
-		<canvas id="display" width="500" height="500" style="float:left">Uh Oh.</canvas>
-		<div id="shaders">
-			<textarea id="vshader-field" cols="80" rows="14" style="margin-left:10px;"></textarea>
-			<textarea id="fshader-field" cols="80" rows="14" style="margin:10px;"></textarea>
+	<div id="overlay"><div class="overlay-text">drop files here</div></div>
+	<div id="bigbox" style="margin-left:auto;margin-right:auto;display:block;clear:right;width:900px;">
+		<canvas id="display" width="500" height="500">Canvas Error!</canvas>
+		<div id="datawrap" style="float:right;width:300px;display:inline;" ondragenter="return false;" ondragover="return false;" ondrop="handleDrop(event);" dragover="print('test');handleDragOver(event)" >
+			<input type="file" id="infile" onchange="initReader();detector.stepData();" />
+			<button onclick="detector.stepData();" style="float:right;margin-right:0;">step</button>
+			
+			<div id="dataview" style="overflow:auto;margin-bottom:10px;padding:10px;width:300px;height:455px;background-color:#FFF;float:left"></div>
 		</div>
 	</div>
 	<br/>
-	<div id="smallbox" style="display:block;float:left;">
+	<div id="smallbox" style="display:block;margin-left:auto;margin-right:auto;margin-bottom:10px;width:1200px;">
+		<!--
 		<dir id="zoomLabel" style="margin:0"></dir>
-		<dir id="axisLabel" style="margin:0"></dir>
-		<button onclick="javascript:detector.moveAxis(10,0);">left</button>
+		<dir id="axisLabel" style="margin:0"></dir> 
+		-->
+		<!-- <button onclick="javascript:detector.moveAxis(10,0);">left</button>
 		<button onclick="javascript:detector.moveAxis(0,10);">up</button>
 		<button onclick="javascript:detector.moveAxis(0,-10);">down</button>
-		<button onclick="javascript:detector.moveAxis(-10,0);">right</button>
-		<button onclick="javascript:detector.resetAxis();">reset</button>
-		<input type="file" id="infile" />
+		<button onclick="javascript:detector.moveAxis(-10,0);">right</button> -->
+		<div id="controls" style="display:block;margin-left:auto;margin-right:auto;width:400px;">
+			Current Bucket: <select name="currBucket" onchange="detector.currBucket = this.value;">
+				<option value=0>0</option>
+				<option value=1>1</option>
+				<option value=2>2</option>
+				<option value=3>3</option>
+			</select>
+			<button onclick="javascript:detector.resetAxis();" >reset</button>
+			<button onclick="$('#shaders').toggle();">shaders</button>
+			<button onclick="KpixFileReader.calibrate();" style="float:right;margin-right:0;">get means</button>
+		</div>
+		<div id="shaders">
+			<textarea id="vshader-field" cols="70" rows="14" style="margin-left:10px;float:left;"></textarea>
+			<textarea id="fshader-field" cols="70" rows="14" style="margin-left:10px;float:right;"></textarea>
+		</div>
+		<div id="dataview-means" style="overflow:auto;margin-top:10px;margin-bottom:10px;padding:10px;width:500px;height:400px;background-color:#FFF;margin-left:auto;margin-right:auto"></div>
 	</div>
-	<button onclick="step();">step</button>
-	<div id="dataview" style="margin-top:20px;padding:10px;width:500px;height:400px;background-color:#DDD;display:block"></div>
 	<script id="shader-fs" type="x-shader/x-fragment">precision mediump float;
 uniform int uIndex;
 uniform float uHighlight;
+uniform vec4 uColor;
 void main(void) {
-	gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+	gl_FragColor = uColor;
 }
 	</script>
 	<script id="shader-vs" type="x-shader/x-vertex">attribute vec3 aVertexPosition;

@@ -45,3 +45,20 @@ function handleMouseDrag(event) {
 	Inputs.lastx = event.clientX;
 	Inputs.lasty = event.clientY;
 }
+function handleDrop(event) {
+	event.stopPropagation();
+	event.preventDefault();
+
+	var files = event.dataTransfer.files;
+	for (var i = 0, f; f = files[i]; i++) {
+		document.getElementById("infile").files[i] = f;
+	}
+	initReader();
+	
+	var $overlay = $("#overlay");
+	$overlay.hide();
+}
+function handleDragOver(event) {
+	var $overlay = $("#overlay");
+	$overlay.show("slow");
+}

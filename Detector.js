@@ -2,6 +2,11 @@ function Detector () {
 	var temp = [];
 	this.x = [];
 	this.y = [];
+	this.hasData = false;
+	this.trueData = [];
+	this.hiADC = [-1,-1,-1,-1];
+	this.lowADC = [-1,-1,-1,-1];
+	this.currBucket = 0;
 	
 	template = [];
 	
@@ -43,18 +48,28 @@ function Detector () {
 
 Detector.prototype.draw = function(gl) {
 	// gl.uniform3fv(gl.getUniformLocation(shaderProg, "uHighColor"), [1.0,0.0,0.0]);
-	var highlightUniform = gl.getUniformLocation(shaderProg, "uHighlight");
+	// var highlightUniform = gl.getUniformLocation(shaderProg, "uHighlight");
+	var colorUniform = gl.getUniformLocation(shaderProg, "uColor");
+	
 	pushMatrix();
-	var currBuffer, lastType;
+	var currBuffer, lastType, col, samples;
 	mat4.translate(mvMatrix, [this.xOffset, -this.yOffset, this.zoom]);
 	mat4.rotateZ(mvMatrix, Math.PI/2, mvMatrix);
 	mat4.rotateY(mvMatrix, this.yaw*Math.PI/180, mvMatrix);
 	mat4.rotateX(mvMatrix, this.pitch*Math.PI/180, mvMatrix);
 	uIndex = gl.getUniformLocation(shaderProg, "uIndex");
 	
+	col = [1.0,1.0,1.0,1.0];
+	
 	for (var i = 0; i < 1024; i++) {
 		gl.uniform1i(uIndex, i);
-		gl.uniform1f(highlightUniform, i == 10 ? 1.0 : 0.0);
+		// gl.uniform1f(highlightUniform, i == 10 ? 1.0 : 0.0);
+		
+		if (this.hasData) {
+			var scale = (this.trueData[i][this.currBucket] - this.lowADC[this.currBucket])/this.hiADC[this.currBucket];
+			col = [scale, 0.0, 1 - scale, 1.0];
+		}
+		gl.uniform4fv(colorUniform, col);
 		
 		pushMatrix();
 		mat4.translate(mvMatrix, [this.y[i]/850, -this.x[i]/850, 0]);
@@ -120,6 +135,42 @@ Detector.prototype.resetAxis = function() {
 	this.targetZoom = -200;
 	this.targetPitch = 0;
 	this.targetYaw = 0;
+}
+Detector.prototype.stepData = function() {
+	if (!KpixFileReader.mapFile) { initReader(); return; }
+
+		var rec = KpixFileReader.readRecord();
+
+		while (KpixFileReader.hasNextRecord()) {
+			if (rec.recordType == "DATA" && rec.recordLength > 1000) break;
+			rec = KpixFileReader.readRecord();
+		}
+		var temp = rec.getSamples();
+		this.trueData = [];
+		while(this.trueData.push([0,0,0,0]) < 1024);
+		var s;
+		for (var i = 0; i < temp.size(); i++) {
+			s = temp.get(i);
+			if (s.adc == 0) continue;
+			if (s.adc > this.hiADC[s.bucket]) this.hiADC[s.bucket] = s.adc;
+			else if (s.adc < this.lowADC[s.bucket] || this.lowADC[s.bucket] == -1) this.lowADC[s.bucket] = s.adc;
+			this.trueData[s.channel][s.bucket] = s.adc;
+		}
+		this.hasData = true;
+
+		//
+		var intext = "<pre>" + rec + "\n";
+		if (rec.recordType == "DATA") {
+			intext += "CHANNEL - BUCKET: ADC\n";
+			var samples = rec.getSamples();
+			
+			for (var i = 0; i < samples.size(); i++) {
+				var samp = samples.get(i);
+				intext += samp.channel + " - " + samp.bucket + ": " + samp.adc + "\n"; 
+			}
+		}
+		intext += "</pre>";
+		$("#dataview").html(intext);
 }
 
 Detector.prototype.getIndexArrays = function (type) {
